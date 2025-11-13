@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Видео Хуудас — Таны Видео</title>
+  <style>
+    :root{--max-width:1100px}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:#f7fafc;color:#0f172a}
+    .wrap{max-width:var(--max-width);margin:32px auto;padding:18px}
+    header{display:flex;align-items:center;gap:12px}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:6px 0 18px;color:#475569}
+    .player{background:#fff;border-radius:12px;padding:12px;box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    button{background:#111827;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+    button.secondary{background:#e2e8f0;color:#0f172a}
+    .note{font-size:13px;color:#64748b;margin-top:8px}
+    .embed-wrap{position:relative;padding-top:56.25%;overflow:hidden;border-radius:8px}
+    .embed-wrap iframe,.embed-wrap video{position:absolute;left:0;top:0;width:100%;height:100%}
+    pre{background:#0f172a;color:#e2e8f0;padding:12px;border-radius:8px;overflow:auto}
+    .steps{margin-top:18px}
+    code{background:#eef2ff;padding:2px 6px;border-radius:4px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Видео Хуудас (Нэг HTML файл)</h1>
+    </header>
+    <p class="lead">Энэ single-file HTML нь 2 сонголттой: <strong>Option A — YouTube/Vimeo embed</strong> (хамгийн хялбар, effectively unlimited storage) ба <strong>Option B — өөрийн сервэр дээр MP4/HLS тоглуулагч</strong> (хянаж болох, гэхдээ серверийн зардал гарна).</p>
+
+    <div class="player">
+      <div class="controls">
+        <button id="btnYoutube">YouTube Embed</button>
+        <button id="btnSelf" class="secondary">Self-hosted MP4/HLS</button>
+        <button id="btnUpload" class="secondary">Хэрэгтэй: FFmpeg команд ба HLS</button>
+      </div>
+
+      <div id="area">
+        <!-- Default: YouTube (replace VIDEO_ID) -->
+        <div id="youtube" class="embed-wrap">
+          <iframe id="ytframe" src="https://www.youtube.com/embed/VIDEO_ID?rel=0&modestbranding=1" title="YouTube video" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+        </div>
+
+        <!-- Self-hosted video (hidden by default). Replace src paths with your files. -->
+        <div id="self" class="embed-wrap" style="display:none;">
+          <!-- MP4 fallback -->
+          <video id="mp4player" controls preload="metadata" poster="/poster.jpg">
+            <!-- If you self-host a large MP4, put the public URL here (e.g. https://yourdomain.com/videos/part1.mp4) -->
+            <source src="/videos/your-video.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+
+        <!-- HLS (M3U8) player via hls.js - will be used when you provide an m3u8 URL -->
+        <div id="hls-wrap" class="embed-wrap" style="display:none;">
+          <video id="hls-video" controls></video>
+        </div>
+
+      </div>
+
+      <p class="note">Заавар: <strong>VIDEO_ID</strong>-г YouTube-ийн "Share → Embed" доторх ID-ээр соль. Хэрвээ та видео-г өөр сервер дээр байрлуулбал <code>/videos/your-video.mp4</code> эсвэл HLS (m3u8) URL ашиглана.</p>
+
+      <div class="steps">
+        <h3>Дараагийн алхмууд (хурдан)</h3>
+        <ol>
+          <li>Option A: Видео-г YouTube-д <code>Unlisted</code> татаж байрлуул → энэ HTML-д VIDEO_ID-г соль → GitHub Pages эсвэл Netlify дээр байршуул.
+          </li>
+          <li>Option B (self-hosted): Том видео-г HLS болгон хувиргаад (FFmpeg) object storage (DigitalOcean Spaces, AWS S3, Bunny CDN гэх мэт) дээр байрлуул → HTML дээр m3u8 URL-ыг оруул.
+          </li>
+          <li>Deploy: GitHub repo үүсгээд <code>index.html</code>-г оруулаад GitHub Pages-ийг асаах буюу Netlify руу drag & drop.</li>
+        </ol>
+
+        <h4>FFmpeg жишээ команд (HLS playlist үүсгэх)</h4>
+        <pre>ffmpeg -i input.mp4 -c:v libx264 -c:a aac -vf "scale=-2:720" -preset fast -crf 23 -f hls -hls_time 8 -hls_playlist_type vod output.m3u8</pre>
+
+        <h4>Хэрвээ та MP4-ыг хэсэглэх (split) хийх бол</h4>
+        <pre>ffmpeg -i input.mp4 -ss 00:00:00 -t 02:00:00 -c copy part1.mp4
+ffmpeg -i input.mp4 -ss 02:00:00 -t 02:00:00 -c copy part2.mp4</pre>
+
+        <h4>GitHub Pages дээр байрлуулах (хурдан)</h4>
+        <pre>git init
+git add index.html
+git commit -m "Initial"
+git branch -M main
+git remote add origin https://github.com/USERNAME/REPO.git
+git push -u origin main
+// Дараа нь GitHub repo settings → Pages → Branch: main → Save</pre>
+
+        <h4>Netlify-д байрлуулах</h4>
+        <p>Netlify.com руу орж, "Sites → Add new site → Deploy manually" → index.html-ээ drag & drop хийхэд л сайт амархан орно.</p>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Simple UI: сольж үзүүлэх
+    const btnYoutube = document.getElementById('btnYoutube')
+    const btnSelf = document.getElementById('btnSelf')
+    const btnUpload = document.getElementById('btnUpload')
+    const youtube = document.getElementById('youtube')
+    const self = document.getElementById('self')
+    const hlsWrap = document.getElementById('hls-wrap')
+
+    btnYoutube.addEventListener('click', ()=>{
+      youtube.style.display = ''
+      self.style.display = 'none'
+      hlsWrap.style.display = 'none'
+    })
+    btnSelf.addEventListener('click', ()=>{
+      youtube.style.display = 'none'
+      self.style.display = ''
+      hlsWrap.style.display = 'none'
+    })
+    btnUpload.addEventListener('click', ()=>{
+      youtube.style.display = 'none'
+      self.style.display = 'none'
+      hlsWrap.style.display = ''
+      initHls()
+    })
+
+    // HLS support via hls.js (CDN)
+    async function initHls(){
+      const hlsUrl = prompt('HLS (m3u8) URL-г оруулна уу (жишээ: https://cdn.example.com/output.m3u8)')
+      if(!hlsUrl) return
+      const video = document.getElementById('hls-video')
+      // load hls.js from CDN if needed
+      if (video.canPlayType('application/vnd.apple.mpegurl')){
+        // native HLS (Safari)
+        video.src = hlsUrl
+        video.load()
+      } else {
+        // non-native: load hls.js dynamically
+        if (!window.Hls){
+          const s = document.createElement('script')
+          s.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest'
+          document.head.appendChild(s)
+          s.onload = ()=> { playWithHls(hlsUrl) }
+        } else playWithHls(hlsUrl)
+      }
+    }
+    function playWithHls(url){
+      const video = document.getElementById('hls-video')
+      const hls = new Hls()
+      hls.loadSource(url)
+      hls.attachMedia(video)
+      hls.on(Hls.Events.MANIFEST_PARSED, function() {
+        // autoplay is blocked sometimes; keep simple
+      })
+    }
+  </script>
+
+</body>
+</html>
